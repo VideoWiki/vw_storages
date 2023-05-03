@@ -4,6 +4,6 @@
 2. pip insatall -r requirement.txt
 3. create .env and add your azure credentials
 4. run python manage.py runserver and celery -A azure_api worker -l info on 2 different terminals
-5. then you can test/use the APIs
+5. then you can test/use the APIs by creating api keys from admin
 
 Thanks
