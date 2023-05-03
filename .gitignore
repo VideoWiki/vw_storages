@@ -1,0 +1,12 @@
+db.sqlite3
+venv/
+venv_st/
+media
+.env
+.idea
+__pycache__/
+*.py[cod]
+*$py.class
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
