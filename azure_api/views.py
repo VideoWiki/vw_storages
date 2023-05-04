@@ -36,6 +36,7 @@ class FileUploadView(APIView):
 
         # Create a BlobServiceClient object using the connection string
         connect_str = connect_str
+        print(connect_str, "mmmmmml")
         blob_service_client = BlobServiceClient.from_connection_string(connect_str, connection_timeout=600,
                                                                        read_timeout=600)
 
