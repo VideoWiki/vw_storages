@@ -114,6 +114,3 @@ class AzureBlobDeleteView(APIView):
 
         # Return a success response if the blob was deleted
         return JsonResponse({'success': True})
-
-
-
