@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'azure_api',
+    'swarm',
     'rest_framework_api_key',
 
 ]
