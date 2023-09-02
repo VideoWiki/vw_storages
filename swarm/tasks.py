@@ -16,7 +16,16 @@ def upload_file_to_server(url, data, headers, file_path, file_name):
     with open(file_path, 'rb') as file:
         files = {'files': (file_name, file)}
         response = requests.post(url, data=data, headers=headers, files=files)
+
+    # Check if the upload was successful (you can adjust the condition as needed)
+    if response.status_code == 200:
+        # Delete the file after successful upload
+        os.remove(file_path)
         return response.text
+    else:
+        # Handle the case where the upload was not successful
+        return f"File upload failed with status code {response.status_code}: {response.text}"
+
 
 @shared_task
 def check_upload_status(task_id):

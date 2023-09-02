@@ -1,5 +1,5 @@
 # views.py
-
+import json 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,16 +8,20 @@ from urllib.parse import urlparse
 from .tasks import upload_file_to_server, check_upload_status, download_file_and_encode
 import os
 import requests
+from subprocess import PIPE, Popen
 from dotenv import load_dotenv
+from vw_storages.settings import BASE_DIR
+
 
 load_dotenv()
 swarm_url = os.environ.get('SWARM_URL')
 
+
 class FileUploadAPI(APIView):
     def post(self, request):
-        video_url = request.data['video_url']
-        cookie = request.data['cookie']
-        username = request.data['username']
+        video_url = request.data.get('video_url')
+        cookie = request.data.get('cookie')
+        username = request.data.get('username')
 
         if not (video_url and cookie and username):
             return Response({"error": "Video URL, cookie, and username are required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -34,20 +38,30 @@ class FileUploadAPI(APIView):
 
         parsed_url = urlparse(video_url)
         file_name = os.path.basename(parsed_url.path)
-
-        # Download the video from the URL and save it temporarily
-        temp_file = NamedTemporaryFile(delete=False)
+        download_path = os.path.join(BASE_DIR, "media/", file_name)
         response = requests.get(video_url)
-        if response.status_code == 200:
-            temp_file.write(response.content)
-            temp_file_path = temp_file.name
-        else:
-            return Response({"error": "Failed to download video from the provided URL."}, status=status.HTTP_400_BAD_REQUEST)
+        # Download the video from the URL and save it temporarily
+        with open(download_path, 'wb') as file:
+                file.write(response.content)
+        print(download_path + file_name)
 
+        def cmdline(command):
+            process = Popen(
+                args=command,
+                stdout=PIPE,
+                shell=True,
+                universal_newlines=False
+            )
+            return process.communicate()[0]
+
+        output = cmdline(f"node swarm/index.js {download_path}")
+
+        decoded_output = output.decode('utf-8')
         # Call the Celery task for file upload
-        upload_task =  upload_file_to_server.delay(url, data=data, headers=headers, file_path=temp_file_path, file_name=file_name)
-        
-        return Response({"message": "File upload has been initiated.", "task_id": upload_task.id}, status=status.HTTP_202_ACCEPTED)
+        upload_task = upload_file_to_server.delay(url, data=data, headers=headers, file_path=download_path, file_name=file_name)
+
+        return Response({"message": "File upload has been initiated.", "task_id": upload_task.id, "filedata": decoded_output}, status=status.HTTP_202_ACCEPTED)
+
 
 
 
