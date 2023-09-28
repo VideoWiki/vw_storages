@@ -18,7 +18,7 @@ load_dotenv()
 CONTAINER = os.environ.get('CONTAINER')
 CONNECT_STR=os.environ.get('CONNECT_STR')
 ROOM_URL = os.environ.get('ROOM_URL')
-
+ROOM_URL2 = os.environ.get('ROOM_URL2')
 class FileUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [HasAPIKey]
@@ -58,8 +58,7 @@ class FileUploadView(APIView):
             # Return the task ID
             return JsonResponse({'task_id': task_id})
         elif file_obj.startswith('http://') or file_obj.startswith('https://'):
-            if file_obj.startswith(str(ROOM_URL)):
-                print(file_obj)
+            if file_obj.startswith(str(ROOM_URL)) or file_obj.startswith(str(ROOM_URL2)):
                 file_name = file_obj.split("/")[-2] + "." + file_obj.split("/")[-1].split(".")[-1]
                 file_path = os.path.join(settings.MEDIA_ROOT, file_name)
                 upload_file_url_task.delay(connect_str, container_name, file_name, file_path, task_id, file_obj)
