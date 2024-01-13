@@ -129,7 +129,7 @@ class VideoUploadViewSIA(APIView):
 
 class VideoDownloadViewSIA(APIView):
     def get(self, request, *args, **kwargs):
-        file_name = request.data.get('file_name')
+        file_name = request.GET.get('file_name')
 
         headers = {
             'Authorization': 'Basic OnBhc3N3b3Jk',
