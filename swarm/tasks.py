@@ -10,6 +10,8 @@ import requests
 from urllib.parse import urlparse
 from django.core.files.temp import NamedTemporaryFile
 import base64
+from django.conf import settings
+
 
 @shared_task
 def upload_file_to_server(url, data, headers, file_path, file_name):
@@ -55,3 +57,28 @@ def download_file_and_encode(url, cookie, filename, podname):
         return {"file_content_base64": base64_content}
     else:
         return {"error": "File download failed"}
+
+
+@shared_task
+def download_and_upload(video_url):
+    file_name = f"{uuid.uuid4()}.m4v"
+    download_path = os.path.join(settings.MEDIA_ROOT, file_name)
+
+    # Download the video from the URL and save it temporarily
+    response = requests.get(video_url)
+    with open(download_path, 'wb') as file:
+        file.write(response.content)
+
+    # Upload the downloaded file to the Swarm API
+    url = 'http://localhost:1633/bzz?name=' + download_path
+    headers = {
+        'swarm-postage-batch-id': '05ad9f1dfc0f4c55e04c077d9d3298e13a10b00b052633938f6627327b3e9ca5',
+        'Content-Type': 'text/plain'
+    }
+    with open(download_path, 'rb') as file:
+        upload_response = requests.post(url, headers=headers, data=file)
+
+    # Remove the downloaded file after upload
+    os.remove(download_path)
+
+    return upload_response.json(), upload_response.status_code
