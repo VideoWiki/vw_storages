@@ -12,7 +12,8 @@ from subprocess import PIPE, Popen
 from dotenv import load_dotenv
 from vw_storages.settings import BASE_DIR
 from django.http import JsonResponse, HttpResponse
-
+from .tasks import download_and_upload
+from celery.result import AsyncResult
 
 load_dotenv()
 swarm_url = os.environ.get('SWARM_URL')
@@ -147,5 +148,44 @@ class VideoDownloadViewSIA(APIView):
             return HttpResponse(binary_data, content_type='video/webm')
         else:
             return JsonResponse({'error': 'Failed to download file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Swarm
+
+
+
+class StartUploadViewSwarm(APIView):
+    def post(self, request, *args, **kwargs):
+        video_url = request.data['video_url']
+
+        if not video_url:
+            return Response({"error": "video_url is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        task = download_and_upload.delay(video_url)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+class TaskStatusViewSwarm(APIView):
+    def get(self, request, task_id, *args, **kwargs):
+        task = AsyncResult(task_id)
+        if task.state == 'PENDING':
+            response = {
+                'state': task.state,
+                'status': 'Pending...'
+            }
+        elif task.state != 'FAILURE':
+            response = {
+                'state': task.state,
+                'status': task.info.get('status', ''),
+                'result': task.info.get('result', '')
+            }
+            if 'result' in task.info:
+                response['result'] = task.info['result']
+        else:
+            response = {
+                'state': task.state,
+                'status': str(task.info),  # this is the exception raised
+            }
+        return Response(response)
+
 
 
