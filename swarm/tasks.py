@@ -64,6 +64,7 @@ def download_file_and_encode(url, cookie, filename, podname):
 def download_and_upload(video_url):
     file_name = f"{uuid.uuid4()}.m4v"
     download_path = os.path.join(settings.MEDIA_ROOT, file_name)
+    print(file_name, video_url, download_path)
 
     # Download the video from the URL and save it temporarily
     response = requests.get(video_url)
