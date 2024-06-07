@@ -79,8 +79,8 @@ def download_and_upload(video_url):
     }
     with open(download_path, 'rb') as file:
         upload_response = requests.post(url, headers=headers, data=file)
-
+    print(url)
     # Remove the downloaded file after upload
     os.remove(download_path)
-
+    print(upload_response)
     return upload_response.json(), upload_response.status_code
