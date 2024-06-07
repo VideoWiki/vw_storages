@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from django.core.files.temp import NamedTemporaryFile
 import base64
 from django.conf import settings
+import uuid
 
 
 @shared_task
