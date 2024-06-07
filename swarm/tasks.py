@@ -72,7 +72,7 @@ def download_and_upload(video_url):
         file.write(response.content)
 
     # Upload the downloaded file to the Swarm API
-    url = 'https://dev.api.cast.video.wiki/bzz?name=' + download_path
+    url = 'https://dev.api.cast.video.wiki/bzz?name=' + file
     headers = {
         'swarm-postage-batch-id': '05ad9f1dfc0f4c55e04c077d9d3298e13a10b00b052633938f6627327b3e9ca5',
         'Content-Type': 'text/plain'
