@@ -166,26 +166,5 @@ class StartUploadViewSwarm(APIView):
 
 class TaskStatusViewSwarm(APIView):
     def get(self, request, task_id, *args, **kwargs):
-        task = AsyncResult(task_id)
-        if task.state == 'PENDING':
-            response = {
-                'state': task.state,
-                'status': 'Pending...'
-            }
-        elif task.state != 'FAILURE':
-            response = {
-                'state': task.state,
-                'status': task.info.get('status', ''),
-                'result': task.info.get('result', '')
-            }
-            if 'result' in task.info:
-                response['result'] = task.info['result']
-        else:
-            response = {
-                'state': task.state,
-                'status': str(task.info),  # this is the exception raised
-            }
-        return Response(response)
-
-
-
+        status_info = check_upload_status(task_id)
+        return Response(status_info, status=status.HTTP_200_OK)
