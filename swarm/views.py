@@ -115,6 +115,7 @@ class VideoUploadViewSIA(APIView):
         filename = parsed_url.path.split("/")[-1]
         if file_url.startswith("https://live1.decast.live"):
             filename = "/".join(parsed_url.path.split("/")[3:])
+            print(filename)
         url = f"https://storage.sia.video.wiki/api/worker/objects/videowiki/{filename}"
 
         resp = requests.get(file_url)
