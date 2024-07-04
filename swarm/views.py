@@ -131,7 +131,7 @@ class VideoUploadViewSIA(APIView):
         response = requests.put(url, headers=headers, data=binary_data)
         print(response, response.text)
 
-        return Response(filename, status=response.status_code)
+        return Response({"filename":filename}, status=response.status_code)
 
 
 class VideoDownloadViewSIA(APIView):
