@@ -85,3 +85,40 @@ def download_and_upload(video_url):
     os.remove(download_path)
     print(upload_response)
     return upload_response.json(), upload_response.status_code
+
+@shared_task
+def upload_video_task(file_url):
+    parsed_url = urlparse(file_url)
+    filename = parsed_url.path.split("/")[-1]
+    if file_url.startswith("https://live1.decast.live"):
+        parts = parsed_url.path.split("/")
+        filename = parts[3] + ".m4v"
+    
+    url = f"https://storage.sia.video.wiki/api/worker/objects/videowiki/{filename}"
+
+    resp = requests.get(file_url)
+    binary_data = resp.content
+
+    headers = {
+        'Content-Type': 'video/webm',
+        'Authorization': 'Basic OnBhc3N3b3Jk'
+    }
+
+    response = requests.put(url, headers=headers, data=binary_data)
+    return {"filename": filename, "status_code": response.status_code, "response_text": response.text}
+
+@shared_task
+def download_video_task(file_name):
+    headers = {
+        'Authorization': 'Basic OnBhc3N3b3Jk',
+        'Content-Type': 'video/webm'
+    }
+    url = f"https://storage.sia.video.wiki/api/worker/objects/videowiki/{file_name}"
+
+    # Send GET request
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        return {"binary_data": response.content}
+    else:
+        return {"error": "Failed to download file", "status_code": response.status_code}
