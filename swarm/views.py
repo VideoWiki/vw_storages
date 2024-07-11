@@ -178,8 +178,6 @@ class TaskStatusViewSwarm(APIView):
 
 
 #SIA CELERY
-import json
-
 class VideoUploadViewSIA(APIView):
     def post(self, request, *args, **kwargs):
         file_url = request.data['file_url']
