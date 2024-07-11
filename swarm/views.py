@@ -14,6 +14,7 @@ from vw_storages.settings import BASE_DIR
 from django.http import JsonResponse, HttpResponse
 from .tasks import download_and_upload
 from celery.result import AsyncResult
+from .tasks import upload_video_task, download_video_task
 
 load_dotenv()
 swarm_url = os.environ.get('SWARM_URL')
@@ -174,3 +175,30 @@ class TaskStatusViewSwarm(APIView):
     def get(self, request, task_id, *args, **kwargs):
         status_info = check_upload_status(task_id)
         return Response(status_info, status=status.HTTP_200_OK)
+
+
+#SIA CELERY
+import json
+
+class VideoUploadViewSIA(APIView):
+    def post(self, request, *args, **kwargs):
+        file_url = request.data['file_url']
+        task = upload_video_task.delay(file_url)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+class VideoDownloadViewSIA(APIView):
+    def get(self, request, *args, **kwargs):
+        file_name = request.GET.get('file_name')
+        task = download_video_task.delay(file_name)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+class TaskStatusView(APIView):
+    def get(self, request, task_id, *args, **kwargs):
+        task = app.AsyncResult(task_id)
+        if task.state == 'SUCCESS':
+            if 'binary_data' in task.result:
+                return HttpResponse(task.result['binary_data'], content_type='video/webm')
+            return JsonResponse(task.result)
+        else:
+            return JsonResponse({"task_id": task_id, "state": task.state}, status=status.HTTP_200_OK)
+
