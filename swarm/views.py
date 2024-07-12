@@ -16,6 +16,7 @@ from .tasks import download_and_upload
 from celery.result import AsyncResult
 from .tasks import upload_video_task, download_video_task
 from swarm.celery import app  # Import the Celery app
+import base64
 
 load_dotenv()
 swarm_url = os.environ.get('SWARM_URL')
