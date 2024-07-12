@@ -185,7 +185,7 @@ class VideoUploadViewSIA(APIView):
         task = upload_video_task.delay(file_url)
         return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
 
-class VideoDownloadViewSIA(APIView):
+class VideoDownloadViewSIAC(APIView):
     def get(self, request, *args, **kwargs):
         file_name = request.GET.get('file_name')
         task = download_video_task.delay(file_name)
