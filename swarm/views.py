@@ -196,8 +196,8 @@ class TaskStatusView(APIView):
         task = app.AsyncResult(task_id)
         if task.state == 'SUCCESS':
             if 'binary_data' in task.result:
-                return HttpResponse(task.result['binary_data'], content_type='video/webm')
+                binary_data = base64.b64decode(task.result['binary_data'])
+                return HttpResponse(binary_data, content_type='video/webm')
             return JsonResponse(task.result)
         else:
             return JsonResponse({"task_id": task_id, "state": task.state}, status=status.HTTP_200_OK)
-
