@@ -14,7 +14,7 @@ from vw_storages.settings import BASE_DIR
 from django.http import JsonResponse, HttpResponse
 from .tasks import download_and_upload
 from celery.result import AsyncResult
-from .tasks import upload_video_task, download_video_task
+from .tasks import upload_video_task, download_video_task, download_file
 from swarm.celery import app  # Import the Celery app
 import base64
 
@@ -205,8 +205,8 @@ class TaskStatusView(APIView):
 
 
 class DownloadSwarmFileView(APIView):
-    def post(self, request):
-        hash = request.data.get('hash')
+    def get(self, request):
+        hash = request.GET.get('hash')
         if hash:
             result = download_file.delay(hash)
             return Response({'task_id': result.id}, status=status.HTTP_202_ACCEPTED)
