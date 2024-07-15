@@ -1,5 +1,5 @@
 from django.urls import path
-from swarm.views import FileUploadAPI, FileUploadStatusAPI, FileDownloadAPI, FileDownloadStatusAPI, VideoUploadViewSIA, VideoDownloadViewSIA, StartUploadViewSwarm, TaskStatusViewSwarm, VideoUploadViewSIA, VideoDownloadViewSIAC, TaskStatusView
+from swarm.views import FileUploadAPI, FileUploadStatusAPI, FileDownloadAPI, FileDownloadStatusAPI, VideoUploadViewSIA, VideoDownloadViewSIA, StartUploadViewSwarm, TaskStatusViewSwarm, VideoUploadViewSIA, VideoDownloadViewSIAC, TaskStatusView, DownloadSwarmFileView
 
 urlpatterns = [
     path('swarm/upload/', FileUploadAPI.as_view(), name='swarm-file-upload'),
@@ -13,5 +13,6 @@ urlpatterns = [
     path('upload/sia/', VideoUploadViewSIA.as_view(), name='upload_video'),
     path('download/sia/', VideoDownloadViewSIAC.as_view(), name='download_video'),
     path('sia-status/<str:task_id>/', TaskStatusView.as_view(), name='task_status'),
+    path('download/swarm/', DownloadSwarmFileView.as_view(), name='download-file'),
 ]
 
