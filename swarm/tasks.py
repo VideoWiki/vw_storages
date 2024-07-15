@@ -124,3 +124,18 @@ def download_video_task(file_name):
         return {"binary_data": encoded_data}
     else:
         return {"error": "Failed to download file", "status_code": response.status_code}
+
+@shared_task
+def download_file(hash):
+    url = f'https://dev.api.cast.video.wiki/bzz/{hash}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        binary_data = response.content
+        encoded_data = base64.b64encode(binary_data).decode('utf-8')
+        return {"binary_data": encoded_data}
+        # return response.content
+    else:
+        return None
+
+
+
