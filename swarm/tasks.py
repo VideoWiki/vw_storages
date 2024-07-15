@@ -76,7 +76,7 @@ def download_and_upload(video_url):
     print(url,"urrll")
     headers = {
         'swarm-postage-batch-id': '126b57245bb9d917c3b9b4fb7f48e945043c22b675cd44a36f2d39947465b5fd',
-        'Content-Type': 'text/plain'
+        'Content-Type': 'video/webm'
     }
     with open(download_path, 'rb') as file:
         upload_response = requests.post(url, headers=headers, data=file)
