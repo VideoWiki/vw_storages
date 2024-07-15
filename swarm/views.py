@@ -202,3 +202,13 @@ class TaskStatusView(APIView):
             return JsonResponse(task.result)
         else:
             return JsonResponse({"task_id": task_id, "state": task.state}, status=status.HTTP_200_OK)
+
+
+class DownloadSwarmFileView(APIView):
+    def post(self, request):
+        hash = request.data.get('hash')
+        if hash:
+            result = download_file.delay(hash)
+            return Response({'task_id': result.id}, status=status.HTTP_202_ACCEPTED)
+        return Response({'error': 'Hash is required'}, status=status.HTTP_400_BAD_REQUEST)
+
