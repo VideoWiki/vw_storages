@@ -195,6 +195,7 @@ class VideoDownloadViewSIAC(APIView):
 class TaskStatusView(APIView):
     def get(self, request, task_id, *args, **kwargs):
         task = app.AsyncResult(task_id)
+        print(task.result, "sialol")
         if task.state == 'SUCCESS':
             if 'binary_data' in task.result:
                 binary_data = base64.b64decode(task.result['binary_data'])
