@@ -11,7 +11,12 @@ import requests
 from subprocess import PIPE, Popen
 from dotenv import load_dotenv
 from vw_storages.settings import BASE_DIR
-
+from django.http import JsonResponse, HttpResponse
+from .tasks import download_and_upload
+from celery.result import AsyncResult
+from .tasks import upload_video_task, download_video_task, download_file
+from swarm.celery import app  # Import the Celery app
+import base64
 
 load_dotenv()
 swarm_url = os.environ.get('SWARM_URL')
@@ -99,3 +104,112 @@ class FileDownloadStatusAPI(APIView):
                 return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response({"status": "Task is still in progress."}, status=status.HTTP_202_ACCEPTED)
+
+
+#SIA
+
+
+class VideoUploadViewSIA(APIView):
+    def post(self, request, *args, **kwargs):
+
+        # Download file contents as binary
+        file_url = request.data['file_url']
+        parsed_url = urlparse(file_url)
+        filename = parsed_url.path.split("/")[-1]
+        if file_url.startswith("https://live1.decast.live"):
+            parts = parsed_url.path.split("/")
+            # Construct the filename by replacing "/" with "-" in the desired part
+            filename = parts[3] + ".m4v"
+            print(filename)
+        url = f"https://storage.sia.video.wiki/api/worker/objects/videowiki/{filename}"
+
+        resp = requests.get(file_url)
+        binary_data = resp.content
+
+        headers = {
+            'Content-Type': 'video/webm',
+            'Authorization': 'Basic OnBhc3N3b3Jk'
+        }
+
+        response = requests.put(url, headers=headers, data=binary_data)
+        print(response, response.text)
+
+        return Response({"filename":filename}, status=response.status_code)
+
+
+class VideoDownloadViewSIA(APIView):
+    def get(self, request, *args, **kwargs):
+        file_name = request.GET.get('file_name')
+
+        headers = {
+            'Authorization': 'Basic OnBhc3N3b3Jk',
+            'Content-Type': 'video/webm'
+        }
+        url = f"https://storage.sia.video.wiki/api/worker/objects/videowiki/{file_name}"
+
+        # Send GET request
+        response = requests.get(url, headers=headers)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            binary_data = response.content
+
+            return HttpResponse(binary_data, content_type='video/webm')
+        else:
+            return JsonResponse({'error': 'Failed to download file'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Swarm
+
+
+
+class StartUploadViewSwarm(APIView):
+    def post(self, request, *args, **kwargs):
+        video_url = request.data['video_url']
+
+        if not video_url:
+            return Response({"error": "video_url is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        task = download_and_upload.delay(video_url)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+class TaskStatusViewSwarm(APIView):
+    def get(self, request, task_id, *args, **kwargs):
+        status_info = check_upload_status(task_id)
+        return Response(status_info, status=status.HTTP_200_OK)
+
+
+#SIA CELERY
+class VideoUploadViewSIA(APIView):
+    def post(self, request, *args, **kwargs):
+        file_url = request.data['file_url']
+        task = upload_video_task.delay(file_url)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+class VideoDownloadViewSIAC(APIView):
+    def get(self, request, *args, **kwargs):
+        file_name = request.GET.get('file_name')
+        task = download_video_task.delay(file_name)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+class TaskStatusView(APIView):
+    def get(self, request, task_id, *args, **kwargs):
+        task = app.AsyncResult(task_id)
+        print(task.result, "sialol")
+        if task.state == 'SUCCESS':
+            if 'binary_data' in task.result:
+                binary_data = base64.b64decode(task.result['binary_data'])
+                return HttpResponse(binary_data, content_type='video/webm')
+            return JsonResponse(task.result)
+        else:
+            return JsonResponse({"task_id": task_id, "state": task.state}, status=status.HTTP_200_OK)
+
+
+class DownloadSwarmFileView(APIView):
+    def get(self, request):
+        hash = request.GET.get('hash')
+        if hash:
+            result = download_file.delay(hash)
+            return Response({'task_id': result.id}, status=status.HTTP_202_ACCEPTED)
+        return Response({'error': 'Hash is required'}, status=status.HTTP_400_BAD_REQUEST)
+
